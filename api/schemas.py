@@ -3,8 +3,8 @@ from typing import Optional
 
 
 class TaskBase(BaseModel):
-    title: str
-    done: bool = False
+    title: Optional[str] = None
+    done: Optional[bool] = None
     done_by: Optional[str] = None
 
 

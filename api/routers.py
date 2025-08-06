@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from api import crud, schemas
-from api.dependencies import get_db
+from api.dependencies import get_async_session
+from aiogram.fsm.state import StatesGroup, State
 
 router = APIRouter(
     prefix="/tasks",
@@ -12,10 +13,11 @@ router = APIRouter(
 @router.get(
     "/{task_id}",
     response_model=schemas.TaskInDB,
+    response_model_exclude_unset=True,
     summary="Получить задачу по ID"
 )
-def get_task(task_id: int, db: Session = Depends(get_db)):
-    task = crud.get_task(db, task_id)
+async def get_task(task_id: int, db: AsyncSession = Depends(get_async_session)):
+    task = await crud.get_task(db, task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="Задача не найдена")
     return task
@@ -24,9 +26,10 @@ def get_task(task_id: int, db: Session = Depends(get_db)):
 @router.get(
     "/",
     response_model=list[schemas.TaskInDB],
-    summary="Получить список всех задач")
-def get_all_tasks(db: Session = Depends(get_db)):
-    return crud.get_tasks(db)
+    summary="Получить список всех задач"
+)
+async def get_all_tasks(db: AsyncSession = Depends(get_async_session)):
+    return await crud.get_tasks(db)
 
 
 @router.post(
@@ -35,8 +38,8 @@ def get_all_tasks(db: Session = Depends(get_db)):
     status_code=201,
     summary="Создать задачу"
 )
-def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
-    return crud.create_task(db, task)
+async def create_task(task: schemas.TaskCreate, db: AsyncSession = Depends(get_async_session)):
+    return await crud.create_task(db, task)
 
 
 @router.delete(
@@ -44,11 +47,12 @@ def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Удалить задачу"
 )
-def delete_task(task_id: int, db: Session = Depends(get_db)):
-    task = crud.delete_task(db, task_id)
-    if task is None:
+async def delete_task(task_id: int, db: AsyncSession = Depends(get_async_session)):
+    result = await crud.delete_task(db, task_id)
+    if result is None:
         raise HTTPException(status_code=404, detail="Задача не найдена")
     return None
+
 
 @router.put(
     "/{task_id}",
@@ -56,14 +60,12 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
     summary="Обновить задачу",
     status_code=status.HTTP_200_OK
 )
-def update_task(
-    task_id: int,
-    task_data: schemas.TaskUpdate,
-    db: Session = Depends(get_db)
+async def update_task(
+        task_id: int,
+        task_data: schemas.TaskUpdate,
+        db: AsyncSession = Depends(get_async_session)
 ):
-    task = crud.update_task(db, task_id, task_data)
+    task = await crud.update_task(db, task_id, task_data)
     if task is None:
-        raise HTTPException(
-            status_code=404, detail= "Задача не найдена")
+        raise HTTPException(status_code=404, detail="Задача не найдена")
     return task
-

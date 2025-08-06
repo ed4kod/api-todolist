@@ -1,40 +1,44 @@
-from typing import Optional
-from sqlalchemy.orm import Session
-from api import models, schemas
+from typing import Optional, Sequence
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from api import schemas
 from .models import Task
 
 
-def get_task(db: Session, task_id: int) -> Optional[Task]:
-    return db.query(Task).filter(Task.id == task_id).first()
+async def get_task(db: AsyncSession, task_id: int) -> Optional[Task]:
+    result = await db.execute(select(Task).where(Task.id == task_id))
+    return result.scalar_one_or_none()
 
 
-def get_tasks(db: Session) -> list[type[Task]]:
-    return db.query(Task).all()
+async def get_tasks(db: AsyncSession) -> Sequence[Task]:
+    result = await db.execute(select(Task))
+    tasks = result.scalars().all()
+    return tasks
 
-
-def create_task(db: Session, task: schemas.TaskCreate) -> Task:
+async def create_task(db: AsyncSession, task: schemas.TaskCreate) -> Task:
     db_task = Task(title=task.title)
     db.add(db_task)
-    db.commit()
-    db.refresh(db_task)
+    await db.commit()
+    await db.refresh(db_task)
     return db_task
 
 
-def update_task(db: Session, task_id: int, data: schemas.TaskUpdate) -> Optional[models.Task]:
-    task = get_task(db, task_id)
+async def update_task(db: AsyncSession, task_id: int, data: schemas.TaskUpdate) -> Optional[Task]:
+    result = await db.execute(select(Task).where(Task.id == task_id))
+    task = result.scalar_one_or_none()
     if not task:
         return None
-    update_data = data.dict(exclude_unset=True)
-    for key, value in update_data.items():
+    for key, value in data.model_dump(exclude_unset=True).items():
         setattr(task, key, value)
-    db.commit()
-    db.refresh(task)
+    await db.commit()
+    await db.refresh(task)
     return task
 
 
-def delete_task(db: Session, task_id: int) -> Optional[Task]:
-    task = get_task(db, task_id)
+async def delete_task(db: AsyncSession, task_id: int) -> Optional[Task]:
+    result = await db.execute(select(Task).where(Task.id == task_id))
+    task = result.scalar_one_or_none()
     if task:
-        db.delete(task)
-        db.commit()
+        await db.delete(task)
+        await db.commit()
     return task
