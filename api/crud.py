@@ -10,13 +10,17 @@ async def get_task(db: AsyncSession, task_id: int) -> Optional[Task]:
     return result.scalar_one_or_none()
 
 
-async def get_tasks(db: AsyncSession) -> Sequence[Task]:
-    result = await db.execute(select(Task))
-    tasks = result.scalars().all()
-    return tasks
+async def get_tasks(db: AsyncSession, user_id: int) -> list[Task]:
+    result = await db.execute(select(Task).where(Task.user_id == user_id))
+    return list(result.scalars().all())
+
 
 async def create_task(db: AsyncSession, task: schemas.TaskCreate) -> Task:
-    db_task = Task(title=task.title)
+    db_task = Task(
+        title=task.title,
+        user_id=task.user_id,  # ⬅ добавили user_id
+        done_by=task.done_by if hasattr(task, "done_by") else None  # опционально
+    )
     db.add(db_task)
     await db.commit()
     await db.refresh(db_task)
@@ -28,8 +32,10 @@ async def update_task(db: AsyncSession, task_id: int, data: schemas.TaskUpdate) 
     task = result.scalar_one_or_none()
     if not task:
         return None
+
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(task, key, value)
+
     await db.commit()
     await db.refresh(task)
     return task

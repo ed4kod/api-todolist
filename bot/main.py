@@ -1,7 +1,7 @@
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
-from .handlers import router
+from bot.handlers import routers
 
 from config import settings
 
@@ -11,4 +11,11 @@ bot = Bot(
 )
 
 dp = Dispatcher()
-dp.include_router(router)
+
+
+def setup_handlers(dp: Dispatcher):
+    for router in routers:
+        dp.include_router(router)
+
+
+setup_handlers(dp)

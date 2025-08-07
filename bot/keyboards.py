@@ -1,32 +1,47 @@
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+import json
+from aiogram.types import (
+    InlineKeyboardMarkup, InlineKeyboardButton,
+    ReplyKeyboardMarkup, KeyboardButton
+)
 
-
-def task_keyboard(task) -> InlineKeyboardMarkup:
-    buttons = [
-        InlineKeyboardButton(
-            text="✅ Выполнено" if not task.done else "❌ Не выполнено",
-            callback_data=f"{'done' if not task.done else 'undone'}_{task.id}"
-        ),
-        InlineKeyboardButton(
-            text="✏️ Изменить",
-            callback_data=f"edit_{task.id}"
-        ),
-        InlineKeyboardButton(
-            text="🗑 Удалить",
-            callback_data=f"delete:{task.id}"
-        )
-    ]
-    return InlineKeyboardMarkup(inline_keyboard=[buttons])
-
-
-
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 def main_menu_keyboard():
-    buttons = [
-        KeyboardButton(text="/get_tasks"),
-        KeyboardButton(text="➕ Добавить задачу"),
-        KeyboardButton(text="/start"),
-    ]
-    return ReplyKeyboardMarkup(keyboard=[buttons], resize_keyboard=True)
+    return ReplyKeyboardMarkup(
+        keyboard=[[  # Кнопки в одной строке
+            KeyboardButton(text="➕ Добавить задачу"),
+            KeyboardButton(text="📋 Показать задачи")
+        ]],
+        resize_keyboard=True
+    )
 
+
+def task_keyboard(task):
+    buttons = [
+        InlineKeyboardButton(
+            text="❌ Отменить" if task.done else "✅ Выполнить",
+            callback_data=f"{'undone' if task.done else 'done'}_{task.id}"
+        ),
+        InlineKeyboardButton(text="✏️ Редактировать", callback_data=f"edit_{task.id}"),
+        InlineKeyboardButton(text="🗑 Удалить", callback_data=f"delete:{task.id}")
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=[buttons])  # или [[b] for b in buttons]
+
+
+def final_action_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text="➕ Добавить", callback_data="add_task"),
+        InlineKeyboardButton(text="🔄 Обновить", callback_data="refresh_tasks")
+    ]])
+
+
+def markup_to_json(markup: InlineKeyboardMarkup) -> str:
+    return json.dumps({
+        "inline_keyboard": [
+            [button.to_python() for button in row]
+            for row in markup.inline_keyboard
+        ]
+    }, sort_keys=True)
+
+
+def markups_equal(m1: InlineKeyboardMarkup, m2: InlineKeyboardMarkup) -> bool:
+    return markup_to_json(m1) == markup_to_json(m2)

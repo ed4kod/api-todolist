@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, func
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -11,3 +11,7 @@ class Task(Base):
     title = Column(String, nullable=False)
     done = Column(Boolean, default=False)
     done_by = Column(String, nullable=True)
+
+    user_id = Column(Integer, index=True)  # Telegram user ID
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
