@@ -1,19 +1,5 @@
 import json
-from aiogram.types import (
-    InlineKeyboardMarkup, InlineKeyboardButton,
-    ReplyKeyboardMarkup, KeyboardButton
-)
-
-
-def main_menu_keyboard():
-    return ReplyKeyboardMarkup(
-        keyboard=[[  # Кнопки в одной строке
-            KeyboardButton(text="➕ Добавить задачу"),
-            KeyboardButton(text="📋 Показать задачи")
-        ]],
-        resize_keyboard=True
-    )
-
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 def task_keyboard(task):
     buttons = [

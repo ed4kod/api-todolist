@@ -45,9 +45,9 @@ async def process_task_text(message: Message, state: FSMContext):
     try:
         async with get_async_session() as db:
             task = await create_task(db, task_title, message.from_user.id)
-            msg = await message.answer(f"✅ Задача создана: #{task.id} — {task.title}")
-            await asyncio.sleep(1)
-            await msg.delete()
+        msg = await message.answer(f"✅ Задача создана: #{task.id} — {task.title}")
+        await asyncio.sleep(1)
+        await msg.delete()
     except Exception:
         await message.answer("❗ Не удалось создать задачу.")
     finally:
@@ -57,5 +57,10 @@ async def process_task_text(message: Message, state: FSMContext):
                     await message.chat.delete_message(mid)
                 except Exception:
                     pass
+
+        # Вызываем обновление задач *до* очистки состояния
         await handle_get_all_tasks(message, state)
-        await state.clear()
+
+        # Теперь можно очистить состояние или оставить task_message_ids, если нужно
+        # await state.clear()  # либо
+        # await state.update_data(task_message_ids=[])

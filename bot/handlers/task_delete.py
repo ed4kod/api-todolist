@@ -1,5 +1,6 @@
 import asyncio
-from aiogram import Router
+from aiogram import Router, F
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 from api.dependencies import get_async_session
 from bot.services import delete_task
